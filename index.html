@@ -16,110 +16,113 @@
             max-width: 600px;
             margin: 0 auto;
             background-color: #fff;
-            padding: 30px;
+            padding: 25px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
             color: #0056b3;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .captcha-area {
             text-align: center;
-            margin-bottom: 20px;
-            padding: 20px;
+            margin-bottom: 25px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 20px;
+            border-radius: 6px;
             background-color: #f9f9f9;
         }
-        .captcha-image {
+        #captchaImage {
             max-width: 100%;
             height: auto;
             border: 1px solid #ccc;
-            border-radius: 4px;
             margin-bottom: 15px;
-            transition: filter 0.3s ease; /* Smooth transition for filters */
-            image-rendering: pixelated; /* Helps for low-res captchas */
+            display: block; /* Shown by default */
+            margin-left: auto;
+            margin-right: auto;
         }
-        /* CSS Filters for image manipulation */
-        .captcha-image.invert { filter: invert(100%); }
-        .captcha-image.grayscale { filter: grayscale(100%); }
-        .captcha-image.contrast { filter: contrast(200%); }
-
-        .filter-buttons {
-            margin-top: 15px;
+        #captchaCanvas {
+            display: none; /* Hidden by default, shown when filters are applied */
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .input-area {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
             gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
         }
-        .filter-buttons button {
-            background-color: #6c757d;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s ease;
-            width: auto; /* Allow buttons to size based on content */
-        }
-        .filter-buttons button:hover {
-            background-color: #5a6268;
-        }
-
-        label {
-            display: block;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 15px;
+        #captchaInput {
+            flex-grow: 1;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 16px;
+            min-width: 150px; /* Ensure input is not too small */
         }
-        .submit-button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
+        button {
+            padding: 10px 18px;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
+            background-color: #007bff;
+            color: white;
             font-size: 16px;
-            transition: background-color 0.3s ease;
-            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            white-space: nowrap; /* Prevent button text from wrapping */
         }
-        .submit-button:hover {
+        button:hover {
             background-color: #0056b3;
+            transform: translateY(-1px);
         }
-        #result {
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        #output {
             margin-top: 25px;
             padding: 15px;
-            border: 1px solid #d4edda;
-            background-color: #d4edda;
-            color: #155724;
+            border: 1px solid #e0e0e0;
             border-radius: 4px;
-            font-weight: bold;
-            text-align: center;
-            display: none; /* Hidden by default */
+            background-color: #e9f7ef;
+            color: #28a745;
+            min-height: 40px;
+            font-size: 1.1em;
+            word-break: break-all; /* Ensure long outputs don't overflow */
         }
-        #result.error {
-            border: 1px solid #f5c6cb;
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .info-text {
-            font-style: italic;
-            color: #777;
+        .message {
+            padding: 10px;
+            border-radius: 4px;
             margin-top: 10px;
-            text-align: center;
             font-size: 0.9em;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .info {
+            color: #004085;
+            background-color: #cce5ff;
+            border-color: #b8daff;
         }
     </style>
 </head>
@@ -128,80 +131,236 @@
         <h1>Captcha Solver</h1>
 
         <div class="captcha-area">
-            <p>Solve the captcha below:</p>
-            <img id="captchaImage" class="captcha-image" src="" alt="Captcha Image">
+            <p>Enter the characters you see in the image:</p>
+            <img id="captchaImage" alt="Captcha Image">
+            <canvas id="captchaCanvas"></canvas>
+            <div id="imageLoadStatus" class="message info">Loading image...</div>
+
             <div class="filter-buttons">
-                <button id="invertBtn">Invert Colors</button>
+                <button id="resetImage">Reset Image</button>
                 <button id="grayscaleBtn">Grayscale</button>
-                <button id="contrastBtn">High Contrast</button>
-                <button id="resetFiltersBtn">Reset Filters</button>
-            </div>
-            <div class="info-text">
-                (This "solver" is human-assisted, providing visual aids. Automated solving of complex captchas
-                requires dedicated OCR/AI, which is beyond client-side browser capabilities for generic images.)
+                <button id="invertBtn">Invert Colors</button>
+                <button id="thresholdBtn">Threshold</button>
             </div>
         </div>
 
-        <label for="captchaInput">Enter the text you see in the image:</label>
-        <input type="text" id="captchaInput" placeholder="Your answer">
+        <div class="input-area">
+            <input type="text" id="captchaInput" placeholder="Enter captcha characters" aria-label="Captcha characters">
+            <button id="submitBtn">Submit Solution</button>
+        </div>
 
-        <button id="submitButton" class="submit-button">Submit Solution</button>
-
-        <div id="result"></div>
+        <h2>Output:</h2>
+        <div id="output">
+            Your submitted solution will appear here.
+        </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const captchaImage = document.getElementById('captchaImage');
+            const captchaCanvas = document.getElementById('captchaCanvas');
+            const ctx = captchaCanvas.getContext('2d', { willReadFrequently: true });
             const captchaInput = document.getElementById('captchaInput');
-            const submitButton = document.getElementById('submitButton');
-            const resultDiv = document.getElementById('result');
-
-            const invertBtn = document.getElementById('invertBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const outputDiv = document.getElementById('output');
+            const imageLoadStatus = document.getElementById('imageLoadStatus');
             const grayscaleBtn = document.getElementById('grayscaleBtn');
-            const contrastBtn = document.getElementById('contrastBtn');
-            const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+            const invertBtn = document.getElementById('invertBtn');
+            const thresholdBtn = document.getElementById('thresholdBtn');
+            const resetImageBtn = document.getElementById('resetImage');
 
-            // Default captcha image URL
-            // This URL uses placeholder.com to generate a simple image with "A1B2C3" text.
-            const defaultCaptchaUrl = 'https://via.placeholder.com/200x70/E0E0E0/333333?text=A1B2C3'; 
+            // Default base64 encoded image for guaranteed manipulation and no CORS issues.
+            // This image simply displays the word "SOLVE" on a black background.
+            const defaultBase64Image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAoCAYAAADI0u55AAABFklEQVR4Xu2YMU/DUBRGv8vFwMFgYBgbQ5NIDiJk8x1gYGI+QGAwGBgYDAwGBgYDAaDMV/8c3lIkrQd53G5W3+2j/F+73l7n5eUkG/Jv8j4w0tAUtJ2Xtfv/TzPyUspAUpK1p0eSgpQUvLt7fQ6f1iSS0lCSpL1lX6xTksS0pL42tN5nJSUJKQp87WlEpeShBSkpHV0nlRSUlJSkhj/y/s4/2hL9fR6H0lKSkpKSnIeR24mH0lKSkqSuJ3HlX6r+XnUqB2G17+p2r4P77L0tS27q40h+8P70dK+kG9RUnJt6h72V/uTsr3/7p1d8v+KxP4h4x8V5Wp3b+v3/j3f+s0bktPq+7sAAAAASUVORK5CYII=';
+            let originalImageData = null; // Stores the original pixel data for resets
+            let currentImageUrl = '';    // Stores the URL of the currently loaded image
 
-            // Function to get URL parameter
-            function getUrlParameter(name) {
-                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-                const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-                const results = regex.exec(location.search);
-                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            /**
+             * Extracts a query parameter from the URL.
+             * @param {string} name The name of the query parameter.
+             * @returns {string|null} The value of the parameter, or null if not found.
+             */
+            function getQueryParam(name) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(name);
             }
 
-            // Get URL from parameter, or use default
-            const imageUrlParam = getUrlParameter('url');
-            captchaImage.src = imageUrlParam || defaultCaptchaUrl;
-            captchaImage.alt = imageUrlParam ? 'Custom Captcha Image' : 'Default Captcha Image';
+            /**
+             * Loads an image into both the <img> tag and, if possible, the <canvas> for manipulation.
+             * Handles CORS restrictions for canvas.
+             * @param {string} url The URL or base64 data URL of the image.
+             */
+            function loadImage(url) {
+                currentImageUrl = url;
+                imageLoadStatus.className = 'message info';
+                imageLoadStatus.textContent = 'Loading image...';
+                
+                // Show img tag by default, hide canvas
+                captchaImage.style.display = 'block';
+                captchaCanvas.style.display = 'none';
 
-            // Event Listeners for filter buttons (allow stacking of filters)
-            invertBtn.addEventListener('click', () => captchaImage.classList.toggle('invert'));
-            grayscaleBtn.addEventListener('click', () => captchaImage.classList.toggle('grayscale'));
-            contrastBtn.addEventListener('click', () => captchaImage.classList.toggle('contrast'));
-            
-            // Reset all filters
-            resetFiltersBtn.addEventListener('click', () => {
-                captchaImage.classList.remove('invert', 'grayscale', 'contrast');
-            });
+                // Disable filter buttons until image is successfully loaded into canvas
+                grayscaleBtn.disabled = true;
+                invertBtn.disabled = true;
+                thresholdBtn.disabled = true;
+                resetImageBtn.disabled = true;
+                
+                captchaImage.src = url;
+                originalImageData = null; // Clear previous original data
 
-            submitButton.addEventListener('click', () => {
-                const userSolution = captchaInput.value.trim();
-                if (userSolution) {
-                    resultDiv.textContent = `Your submitted solution: "${userSolution}"`;
-                    resultDiv.className = ''; // Clear previous classes
-                    resultDiv.style.display = 'block';
-                    resultDiv.classList.add('success'); // Apply success styling
+                captchaImage.onload = () => {
+                    imageLoadStatus.textContent = 'Image loaded.';
+                    try {
+                        // Attempt to draw to canvas for manipulation
+                        captchaCanvas.width = captchaImage.naturalWidth;
+                        captchaCanvas.height = captchaImage.naturalHeight;
+                        ctx.clearRect(0, 0, captchaCanvas.width, captchaCanvas.height); // Clear canvas
+                        ctx.drawImage(captchaImage, 0, 0);
+                        originalImageData = ctx.getImageData(0, 0, captchaCanvas.width, captchaCanvas.height);
+                        
+                        // If we reach here, canvas is not tainted or it's a base64 image
+                        grayscaleBtn.disabled = false;
+                        invertBtn.disabled = false;
+                        thresholdBtn.disabled = false;
+                        resetImageBtn.disabled = false;
+                        imageLoadStatus.textContent += ' Image filters available.';
+                    } catch (e) {
+                        imageLoadStatus.className = 'message error';
+                        imageLoadStatus.textContent += ' Warning: Could not load image into canvas for filtering (CORS restriction or security error). Displaying image directly. Filters disabled.';
+                        // Ensure image tag is shown if canvas manipulation fails
+                        captchaImage.style.display = 'block';
+                        captchaCanvas.style.display = 'none';
+                    }
+                };
+
+                captchaImage.onerror = () => {
+                    imageLoadStatus.className = 'message error';
+                    imageLoadStatus.textContent = 'Failed to load image from URL. Please check the URL or try another.';
+                    // Fallback to default if external URL fails AND it's not already the default
+                    if (url !== defaultBase64Image) {
+                         imageLoadStatus.textContent += ' Falling back to sample captcha.';
+                         loadImage(defaultBase64Image); // Attempt to load default
+                    }
+                    originalImageData = null; // No original data if load failed
+                    // Disable filters if no image is loadable into canvas
+                    grayscaleBtn.disabled = true;
+                    invertBtn.disabled = true;
+                    thresholdBtn.disabled = true;
+                    resetImageBtn.disabled = true;
+                };
+            }
+
+            /**
+             * Applies a given filter function to the canvas image data.
+             * @param {function} filterFn The function to apply (e.g., toGrayscale, invertColors).
+             */
+            function applyFilter(filterFn) {
+                if (!originalImageData) {
+                    imageLoadStatus.className = 'message error';
+                    imageLoadStatus.textContent = 'No image data available for filtering (CORS or load error).';
+                    return;
+                }
+
+                captchaImage.style.display = 'none'; // Hide img tag
+                captchaCanvas.style.display = 'block'; // Show canvas tag
+                
+                // Always start from the original image data for filtering
+                ctx.putImageData(originalImageData, 0, 0); 
+                const imageData = ctx.getImageData(0, 0, captchaCanvas.width, captchaCanvas.height);
+                filterFn(imageData.data);
+                ctx.putImageData(imageData, 0, 0);
+                resetImageBtn.disabled = false; // Ensure reset is always available after a filter
+            }
+
+            /** Resets the canvas to the original image state. */
+            function resetCanvasContent() {
+                if (originalImageData) {
+                    ctx.putImageData(originalImageData, 0, 0);
+                }
+            }
+
+            // --- Image Filter Functions ---
+            /** Converts image data to grayscale. */
+            function toGrayscale(pixels) {
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+                    // Using luminosity method for more accurate grayscale conversion
+                    const v = 0.2126 * r + 0.7152 * g + 0.0722 * b; 
+                    pixels[i] = pixels[i + 1] = pixels[i + 2] = v;
+                }
+            }
+
+            /** Inverts the colors of the image data. */
+            function invertColors(pixels) {
+                for (let i = 0; i < pixels.length; i += 4) {
+                    pixels[i] = 255 - pixels[i];       // Red
+                    pixels[i + 1] = 255 - pixels[i + 1]; // Green
+                    pixels[i + 2] = 255 - pixels[i + 2]; // Blue
+                }
+            }
+
+            /** Converts image data to black and white based on a threshold. */
+            function toThreshold(pixels, threshold = 128) {
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i];
+                    const g = pixels[i + 1];
+                    const b = pixels[i + 2];
+                    const gray = (r + g + b) / 3; // Simple average for grayscale
+                    const value = gray > threshold ? 255 : 0;
+                    pixels[i] = pixels[i + 1] = pixels[i + 2] = value;
+                }
+            }
+
+
+            // --- Event Listeners ---
+            submitBtn.addEventListener('click', () => {
+                const solution = captchaInput.value.trim();
+                if (solution) {
+                    outputDiv.className = ''; // Clear previous classes
+                    outputDiv.textContent = `You submitted: "${solution}"`;
+                    // In a real application, this solution would be sent to a backend
+                    // for verification against the actual captcha solution.
+                    // For this static app, we just display the user's input.
                 } else {
-                    resultDiv.textContent = 'Please enter a solution.';
-                    resultDiv.className = 'error'; // Apply error styling
-                    resultDiv.style.display = 'block';
+                    outputDiv.className = 'message error';
+                    outputDiv.textContent = 'Please enter your solution before submitting.';
                 }
             });
+
+            grayscaleBtn.addEventListener('click', () => {
+                applyFilter(toGrayscale);
+            });
+
+            invertBtn.addEventListener('click', () => {
+                applyFilter(invertColors);
+            });
+
+            thresholdBtn.addEventListener('click', () => {
+                applyFilter(toThreshold);
+            });
+
+            resetImageBtn.addEventListener('click', () => {
+                if (originalImageData) {
+                    captchaImage.style.display = 'block'; // Show img tag again
+                    captchaCanvas.style.display = 'none'; // Hide canvas
+                    resetCanvasContent(); // Reset canvas content (though it's hidden)
+                    imageLoadStatus.className = 'message info';
+                    imageLoadStatus.textContent = 'Image reset to original.';
+                } else {
+                    // If no original data, just reload the initial image source
+                    loadImage(currentImageUrl);
+                }
+            });
+
+            // --- Initial Load ---
+            const imageUrl = getQueryParam('url');
+            if (imageUrl) {
+                loadImage(imageUrl);
+            } else {
+                loadImage(defaultBase64Image);
+            }
         });
     </script>
 </body>
