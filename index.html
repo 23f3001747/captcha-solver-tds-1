@@ -1,196 +1,208 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Captcha Solver</title>
+    <title>Captcha Solver</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f7f9fc;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
             color: #333;
             line-height: 1.6;
         }
-
         .container {
-            background-color: #ffffff;
-            padding: 2.5em;
-            border-radius: 10px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            text-align: center;
-            max-width: 550px;
-            width: 90%;
-            border: 1px solid #e0e0e0;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
         h1 {
-            color: #007bff;
-            margin-bottom: 0.8em;
-            font-size: 2em;
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
         }
-
-        p {
-            margin-bottom: 1.5em;
-            color: #555;
-        }
-
-        #captchaImage {
+        .captcha-area {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
             border: 1px solid #ddd;
-            margin-bottom: 2em;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .captcha-image {
             max-width: 100%;
             height: auto;
-            display: block; /* Ensures image is centered */
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            background-color: #fdfdfd; /* Background for placeholder if image fails */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            transition: filter 0.3s ease; /* Smooth transition for filters */
+            image-rendering: pixelated; /* Helps for low-res captchas */
         }
+        /* CSS Filters for image manipulation */
+        .captcha-image.invert { filter: invert(100%); }
+        .captcha-image.grayscale { filter: grayscale(100%); }
+        .captcha-image.contrast { filter: contrast(200%); }
 
-        input[type="text"] {
-            padding: 0.9em 1.2em;
-            border: 1px solid #cccccc;
-            border-radius: 5px;
-            width: calc(100% - 2.4em); /* Account for padding */
-            max-width: 280px;
-            margin-bottom: 1.5em;
-            font-size: 1.1em;
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
-            transition: border-color 0.2s ease-in-out;
+        .filter-buttons {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
         }
-
-        input[type="text"]:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
-        }
-
-        button {
-            background-color: #28a745; /* Green for success action */
+        .filter-buttons button {
+            background-color: #6c757d;
             color: white;
-            padding: 0.9em 2em;
+            padding: 8px 12px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 1.1em;
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            width: auto; /* Allow buttons to size based on content */
+        }
+        .filter-buttons button:hover {
+            background-color: #5a6268;
         }
 
-        button:hover {
-            background-color: #218838;
-            transform: translateY(-1px);
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
         }
-
-        button:active {
-            transform: translateY(0);
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
         }
-
-        #output {
-            margin-top: 2em;
-            padding: 1.2em;
-            border-radius: 8px;
-            min-height: 4em;
-            font-size: 1em;
-            line-height: 1.5;
-            background-color: #e2f7e7; /* Light green for output area */
+        .submit-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 25px;
+            padding: 15px;
             border: 1px solid #d4edda;
-            color: #1a5e2c; /* Dark green for output text */
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+            display: none; /* Hidden by default */
         }
-
-        #output p {
-            margin: 0.5em 0;
-            color: inherit; /* Inherit color from parent div */
-        }
-
-        #output strong {
-            color: #007bff; /* Highlight user's input */
-        }
-
-        .info-text {
-            font-size: 0.9em;
-            color: #6a7c8a;
-            margin-top: 0.8em;
-        }
-
-        .error-message {
+        #result.error {
+            border: 1px solid #f5c6cb;
             background-color: #f8d7da;
-            border-color: #f5c6cb;
             color: #721c24;
+        }
+        .info-text {
+            font-style: italic;
+            color: #777;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Captcha Solver Demo</h1>
+        <h1>Captcha Solver</h1>
 
-        <p>Please enter the text you see in the image below:</p>
-        <img id="captchaImage" src="" alt="Captcha Image">
-
-        <input type="text" id="captchaInput" placeholder="Type captcha text here" autocomplete="off">
-        <button id="solveButton">Submit Captcha</button>
-
-        <div id="output">
-            <p>Your submission result will appear here.</p>
-            <p class="info-text">(This is a client-side demo. In a real application, the answer would be sent to a server for verification.)</p>
+        <div class="captcha-area">
+            <p>Solve the captcha below:</p>
+            <img id="captchaImage" class="captcha-image" src="" alt="Captcha Image">
+            <div class="filter-buttons">
+                <button id="invertBtn">Invert Colors</button>
+                <button id="grayscaleBtn">Grayscale</button>
+                <button id="contrastBtn">High Contrast</button>
+                <button id="resetFiltersBtn">Reset Filters</button>
+            </div>
+            <div class="info-text">
+                (This "solver" is human-assisted, providing visual aids. Automated solving of complex captchas
+                requires dedicated OCR/AI, which is beyond client-side browser capabilities for generic images.)
+            </div>
         </div>
+
+        <label for="captchaInput">Enter the text you see in the image:</label>
+        <input type="text" id="captchaInput" placeholder="Your answer">
+
+        <button id="submitButton" class="submit-button">Submit Solution</button>
+
+        <div id="result"></div>
     </div>
 
     <script>
-        // Ensure the DOM is fully loaded before running script
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            let imageUrl = urlParams.get('url');
-
-            // Default captcha image URL if none is provided in the query string.
-            // This is a placeholder; in a real scenario, you'd link to your sample captcha image.
-            // The text "SAMPLE123" is easily readable for demonstration purposes.
-            if (!imageUrl) {
-                imageUrl = 'https://via.placeholder.com/250x80/EEEEEE/333333?text=SAMPLE123';
-            }
-
             const captchaImage = document.getElementById('captchaImage');
-            if (captchaImage) {
-                captchaImage.src = imageUrl;
-            }
-
-            const solveButton = document.getElementById('solveButton');
             const captchaInput = document.getElementById('captchaInput');
-            const outputDiv = document.getElementById('output');
+            const submitButton = document.getElementById('submitButton');
+            const resultDiv = document.getElementById('result');
 
-            if (solveButton && captchaInput && outputDiv) {
-                solveButton.addEventListener('click', () => {
-                    const userAnswer = captchaInput.value.trim();
-                    if (userAnswer) {
-                        outputDiv.innerHTML = `<p>You submitted: <strong>${userAnswer}</strong></p>
-                                               <p class="info-text">(Your answer has been processed!)</p>`;
-                        outputDiv.classList.remove('error-message');
-                        outputDiv.style.backgroundColor = '#e2f7e7';
-                        outputDiv.style.borderColor = '#d4edda';
-                        outputDiv.style.color = '#1a5e2c';
-                    } else {
-                        outputDiv.innerHTML = `<p>Please enter the text you see in the image.</p>`;
-                        outputDiv.classList.add('error-message');
-                        outputDiv.style.backgroundColor = ''; /* Reset to error message style */
-                        outputDiv.style.borderColor = '';
-                        outputDiv.style.color = '';
-                    }
-                });
+            const invertBtn = document.getElementById('invertBtn');
+            const grayscaleBtn = document.getElementById('grayscaleBtn');
+            const contrastBtn = document.getElementById('contrastBtn');
+            const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
-                // Allow submitting by pressing Enter in the input field
-                captchaInput.addEventListener('keypress', (event) => {
-                    if (event.key === 'Enter') {
-                        solveButton.click();
-                    }
-                });
+            // Default captcha image URL
+            // This URL uses placeholder.com to generate a simple image with "A1B2C3" text.
+            const defaultCaptchaUrl = 'https://via.placeholder.com/200x70/E0E0E0/333333?text=A1B2C3'; 
+
+            // Function to get URL parameter
+            function getUrlParameter(name) {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                const results = regex.exec(location.search);
+                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
             }
+
+            // Get URL from parameter, or use default
+            const imageUrlParam = getUrlParameter('url');
+            captchaImage.src = imageUrlParam || defaultCaptchaUrl;
+            captchaImage.alt = imageUrlParam ? 'Custom Captcha Image' : 'Default Captcha Image';
+
+            // Event Listeners for filter buttons (allow stacking of filters)
+            invertBtn.addEventListener('click', () => captchaImage.classList.toggle('invert'));
+            grayscaleBtn.addEventListener('click', () => captchaImage.classList.toggle('grayscale'));
+            contrastBtn.addEventListener('click', () => captchaImage.classList.toggle('contrast'));
+            
+            // Reset all filters
+            resetFiltersBtn.addEventListener('click', () => {
+                captchaImage.classList.remove('invert', 'grayscale', 'contrast');
+            });
+
+            submitButton.addEventListener('click', () => {
+                const userSolution = captchaInput.value.trim();
+                if (userSolution) {
+                    resultDiv.textContent = `Your submitted solution: "${userSolution}"`;
+                    resultDiv.className = ''; // Clear previous classes
+                    resultDiv.style.display = 'block';
+                    resultDiv.classList.add('success'); // Apply success styling
+                } else {
+                    resultDiv.textContent = 'Please enter a solution.';
+                    resultDiv.className = 'error'; // Apply error styling
+                    resultDiv.style.display = 'block';
+                }
+            });
         });
     </script>
 </body>
 </html>
-```
